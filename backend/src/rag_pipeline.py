@@ -1,3 +1,5 @@
+"""This is the pure model before it was wrapped in FastAPI and changed for HTTP Req/Res"""
+
 import os
 from dotenv import load_dotenv
 
@@ -135,7 +137,7 @@ def ask_question(chain, query):
 
 
 if __name__ == "__main__":
-    PDF_PATH = "data/story.pdf"
+    PDF_PATH = "../data/story.pdf"
 
     print("Loading PDF...")
     docs = load_pdf(PDF_PATH)
