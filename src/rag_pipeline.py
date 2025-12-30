@@ -115,7 +115,7 @@ def ask_question(chain, query):
 
 
 if __name__ == "__main__":
-    PDF_PATH = "data/sample.pdf"
+    PDF_PATH = "data/story.pdf"
 
     print("So this is inside the normal str Loading PDF...")
     docs = load_pdf(PDF_PATH)
