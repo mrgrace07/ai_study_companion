@@ -88,18 +88,33 @@ def create_rag_chain(vectorstore, llm):
 
     return rag_chain
 
+from datetime import datetime
+
+AUDIO_DIR = "audio_outputs"
+os.makedirs(AUDIO_DIR, exist_ok=True)
+
 def speak(text: str):
-    try:
-        engine = pyttsx3.init()
-        engine.setProperty("rate", 170)
-        engine.setProperty("volume", 1.0)
+    engine = pyttsx3.init()
+    engine.setProperty("rate", 170)
+    engine.say(text)
+    engine.runAndWait()
+    engine.stop()
 
-        engine.say(text)
-        engine.runAndWait()
-        engine.stop()
+def save_audio(text: str):
+    engine = pyttsx3.init()
+    engine.setProperty("rate", 170)
 
-    except Exception as e:
-        print("[TTS Error]", e)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    audio_path = os.path.join(AUDIO_DIR, f"response_{timestamp}.wav")
+
+    engine.save_to_file(text, audio_path)
+    engine.runAndWait()
+    engine.stop()
+
+    print(f"[Audio saved] {audio_path}")
+
+    
+
 
 
 def ask_question(chain, query):
@@ -112,12 +127,17 @@ def ask_question(chain, query):
 
     speak(answer_text)
 
+    choice = input("Save this response as audio? (y/n): ").strip().lower()
+
+    if choice == "y":
+        save_audio(answer_text)
+
 
 
 if __name__ == "__main__":
-    PDF_PATH = "data/sample.pdf"
+    PDF_PATH = "data/story.pdf"
 
-    print("So this is inside the normal str Loading PDF...")
+    print("Loading PDF...")
     docs = load_pdf(PDF_PATH)
 
     print("Splitting document...")
