@@ -1,7 +1,11 @@
 import { useState } from "react";
-import { Upload, FileText, Loader2, Send, MessageSquare, CheckCircle2, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import Navbar from "./components/Navbar";
+import PdfUploadCard from "./components/PdfUploadCard";
+import QuestionInput from "./components/QuestionInput";
+import { AnswerDisplay } from "./components/AnswerDisplay";
 
-type UploadStatus = "idle" | "uploading" | "processing" | "ready" | "error";
+export type UploadStatus = "idle" | "uploading" | "processing" | "ready" | "error";
 
 type Conversation = {
   id: string;
@@ -112,21 +116,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      <nav className="border-b border-slate-800 bg-slate-950/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <FileText className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">PDF Chat AI</h1>
-                <p className="text-xs text-slate-400">Ask anything about your documents</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
       
       <main className="container mx-auto px-4 py-8 space-y-12 max-w-4xl">
         {error && (
@@ -154,79 +144,11 @@ export default function App() {
             </p>
           </div>
 
-          <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-8 backdrop-blur-sm">
-            <label
-              htmlFor="pdf-upload"
-              className={`block border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all ${
-                uploadStatus === "idle"
-                  ? "border-slate-700 hover:border-blue-500 hover:bg-blue-500/5"
-                  : uploadStatus === "error"
-                  ? "border-red-500/50 bg-red-500/5"
-                  : "border-green-500/50 bg-green-500/5"
-              }`}
-            >
-              <input
-                id="pdf-upload"
-                type="file"
-                accept=".pdf"
-                onChange={handleFileUpload}
-                className="hidden"
-                disabled={uploadStatus === "uploading" || uploadStatus === "processing"}
-              />
-
-              <div className="flex flex-col items-center gap-4">
-                {uploadStatus === "idle" && (
-                  <>
-                    <Upload className="w-12 h-12 text-slate-400" />
-                    <div>
-                      <p className="text-white font-medium">Click to upload PDF</p>
-                      <p className="text-slate-400 text-sm mt-1">or drag and drop</p>
-                    </div>
-                  </>
-                )}
-
-                {uploadStatus === "uploading" && (
-                  <>
-                    <Loader2 className="w-12 h-12 text-blue-400 animate-spin" />
-                    <div>
-                      <p className="text-white font-medium">Uploading...</p>
-                      <p className="text-slate-400 text-sm mt-1">{fileName}</p>
-                    </div>
-                  </>
-                )}
-
-                {uploadStatus === "processing" && (
-                  <>
-                    <Loader2 className="w-12 h-12 text-purple-400 animate-spin" />
-                    <div>
-                      <p className="text-white font-medium">Processing document...</p>
-                      <p className="text-slate-400 text-sm mt-1">Creating embeddings</p>
-                    </div>
-                  </>
-                )}
-
-                {uploadStatus === "ready" && (
-                  <>
-                    <CheckCircle2 className="w-12 h-12 text-green-400" />
-                    <div>
-                      <p className="text-white font-medium">Ready to answer questions!</p>
-                      <p className="text-slate-400 text-sm mt-1">{fileName}</p>
-                    </div>
-                  </>
-                )}
-
-                {uploadStatus === "error" && (
-                  <>
-                    <AlertCircle className="w-12 h-12 text-red-400" />
-                    <div>
-                      <p className="text-white font-medium">Upload failed</p>
-                      <p className="text-slate-400 text-sm mt-1">Click to try again</p>
-                    </div>
-                  </>
-                )}
-              </div>
-            </label>
-          </div>
+          <PdfUploadCard 
+            uploadStatus={uploadStatus} 
+            fileName={fileName} 
+            onFileUpload={handleFileUpload}
+          />
         </section>
 
         {uploadStatus !== "idle" && (
@@ -255,58 +177,19 @@ export default function App() {
             </div>
 
             {conversations.length > 0 && (
-              <div className="space-y-4">
-                {conversations.map((conv) => (
-                  <div key={conv.id} className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 space-y-4 backdrop-blur-sm">
-                    <div className="flex items-start gap-3">
-                      <MessageSquare className="w-5 h-5 text-blue-400 flex-shrink-0 mt-1" />
-                      <div className="flex-1">
-                        <p className="text-white font-medium">{conv.question}</p>
-                        <p className="text-slate-400 text-xs mt-1">
-                          {conv.timestamp.toLocaleTimeString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="pl-8 border-l-2 border-slate-700">
-                      <p className="text-slate-300 leading-relaxed">{conv.answer}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <AnswerDisplay 
+                conversations={conversations}
+              />
             )}
-
-            <div className="sticky bottom-6">
-              <div className="bg-slate-900/90 border border-slate-700 rounded-xl p-4 backdrop-blur-xl shadow-2xl">
-                <div className="flex gap-3">
-                  <input
-                    type="text"
-                    value={question}
-                    onChange={(e) => setQuestion(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder={uploadStatus === "ready" ? "Ask a question about your PDF..." : "Waiting for PDF..."}
-                    disabled={uploadStatus !== "ready" || isAsking}
-                    className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                  <button
-                    onClick={handleAsk}
-                    disabled={uploadStatus !== "ready" || isAsking || !question.trim()}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-lg shadow-blue-500/25"
-                  >
-                    {isAsking ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        Thinking...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-5 h-5" />
-                        Ask
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
+            <QuestionInput 
+              question={question}
+              setQuestion={setQuestion}
+              uploadStatus={uploadStatus}
+              handleAsk={handleAsk}
+              isAsking={isAsking}
+              handleKeyPress={handleKeyPress}
+            />
+            
           </section>
         )}
       </main>
