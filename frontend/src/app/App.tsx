@@ -15,7 +15,7 @@ type Conversation = {
   audioFile?: string;
 };
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = import.meta.env.VITE_BASE_API_URL || "http://localho:8000";
 
 export default function App() {
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>("idle");
@@ -52,9 +52,9 @@ export default function App() {
       }
 
       setUploadStatus("processing");
-      
+
       await new Promise((resolve) => setTimeout(resolve, 500));
-      
+
       setUploadStatus("ready");
     } catch (err) {
       setUploadStatus("error");
@@ -107,7 +107,7 @@ export default function App() {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleAsk();
@@ -117,7 +117,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <Navbar />
-      
+
       <main className="container mx-auto px-4 py-8 space-y-12 max-w-4xl">
         {error && (
           <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-4 flex items-start gap-3">
@@ -144,9 +144,9 @@ export default function App() {
             </p>
           </div>
 
-          <PdfUploadCard 
-            uploadStatus={uploadStatus} 
-            fileName={fileName} 
+          <PdfUploadCard
+            uploadStatus={uploadStatus}
+            fileName={fileName}
             onFileUpload={handleFileUpload}
           />
         </section>
@@ -177,11 +177,21 @@ export default function App() {
             </div>
 
             {conversations.length > 0 && (
-              <AnswerDisplay 
+              <AnswerDisplay
                 conversations={conversations}
+                apiBaseUrl={API_BASE_URL}
+                onAudioGenerated={(conversationId, audioFile) => {
+                  setConversations((prev) =>
+                    prev.map((conv) =>
+                      conv.id === conversationId
+                        ? { ...conv, audioFile }
+                        : conv
+                    )
+                  );
+                }}
               />
             )}
-            <QuestionInput 
+            <QuestionInput
               question={question}
               setQuestion={setQuestion}
               uploadStatus={uploadStatus}
@@ -189,7 +199,7 @@ export default function App() {
               isAsking={isAsking}
               handleKeyPress={handleKeyPress}
             />
-            
+
           </section>
         )}
       </main>

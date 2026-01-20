@@ -1,4 +1,5 @@
-"""This is the pure model before it was wrapped in FastAPI and changed for HTTP Req/Res"""
+"""This is the pure model before it was wrapped in FastAPI and changed for HTTP Req/Res
+Only here for reference. Everything is used in app.py"""
 
 import os
 from dotenv import load_dotenv
