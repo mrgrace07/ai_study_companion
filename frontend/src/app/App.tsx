@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Sparkles } from "lucide-react";
 import Navbar from "./components/Navbar";
 import PdfUploadCard from "./components/PdfUploadCard";
 import QuestionInput from "./components/QuestionInput";
 import { AnswerDisplay } from "./components/AnswerDisplay";
+import Footer from "./components/Footer";
 
 export type UploadStatus = "idle" | "uploading" | "processing" | "ready" | "error";
 
@@ -15,7 +16,7 @@ type Conversation = {
   audioFile?: string;
 };
 
-const API_BASE_URL = import.meta.env.VITE_BASE_API_URL || "http://localho:8000";
+const API_BASE_URL = import.meta.env.VITE_BASE_API_URL || "http://localhost:8000";
 
 export default function App() {
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>("idle");
@@ -52,9 +53,7 @@ export default function App() {
       }
 
       setUploadStatus("processing");
-
       await new Promise((resolve) => setTimeout(resolve, 500));
-
       setUploadStatus("ready");
     } catch (err) {
       setUploadStatus("error");
@@ -71,13 +70,8 @@ export default function App() {
     try {
       const response = await fetch(`${API_BASE_URL}/ask`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          question: question.trim(),
-          save_audio: false,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: question.trim(), save_audio: false }),
       });
 
       if (!response.ok) {
@@ -115,35 +109,50 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen bg-[#0a0a1a] flex flex-col">
       <Navbar />
 
-      <main className="container mx-auto px-4 py-8 space-y-12 max-w-4xl">
+      {/* Ambient background glows */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[15%] w-[500px] h-[500px] bg-violet-600/8 rounded-full blur-[120px]" />
+        <div className="absolute top-[20%] right-[10%] w-[400px] h-[400px] bg-indigo-600/6 rounded-full blur-[100px]" />
+        <div className="absolute bottom-[10%] left-[30%] w-[600px] h-[600px] bg-violet-500/5 rounded-full blur-[140px]" />
+      </div>
+
+      <main className="flex-1 pt-24 pb-8">
+        {/* Hero Section */}
+        <section className="text-center px-4 mb-12">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-6 rounded-full bg-violet-500/10 border border-violet-500/20">
+            <Sparkles className="w-3.5 h-3.5 text-violet-400" />
+            <span className="text-xs font-medium text-violet-300">AI-Powered Study Companion</span>
+          </div>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 tracking-tight leading-tight">
+            An AI tutor made
+            <br />
+            <span className="bg-gradient-to-r from-violet-400 via-indigo-400 to-violet-400 bg-clip-text text-transparent">
+              for Students
+            </span>
+          </h1>
+          <p className="text-base md:text-lg text-slate-500 max-w-xl mx-auto leading-relaxed">
+            Turns your learning materials into notes, interactive chats, quizzes, and more.
+          </p>
+        </section>
+
+        {/* Error Banner */}
         {error && (
-          <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-4 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <h3 className="text-red-300 font-medium">Error</h3>
-              <p className="text-red-200 text-sm mt-1">{error}</p>
+          <div className="max-w-2xl mx-auto px-4 mb-6">
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-red-300 font-medium text-sm">Error</h3>
+                <p className="text-red-200/80 text-sm mt-0.5">{error}</p>
+              </div>
             </div>
           </div>
         )}
 
-        <section className="space-y-4">
-          <div className="text-center space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-400"></span>
-              </span>
-              <span className="text-sm font-medium">Step 1</span>
-            </div>
-            <h2 className="text-2xl font-bold text-white">Upload Your PDF</h2>
-            <p className="text-slate-400 max-w-2xl mx-auto">
-              Start by uploading a PDF document. Our AI will process it and be ready to answer any questions you have.
-            </p>
-          </div>
-
+        {/* Upload Section */}
+        <section className="px-4 mb-12">
           <PdfUploadCard
             uploadStatus={uploadStatus}
             fileName={fileName}
@@ -151,31 +160,9 @@ export default function App() {
           />
         </section>
 
+        {/* Chat Section */}
         {uploadStatus !== "idle" && (
-          <section className="space-y-8">
-            <div className="text-center space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                <span className="relative flex h-2 w-2">
-                  {uploadStatus === "ready" && (
-                    <>
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-400"></span>
-                    </>
-                  )}
-                  {uploadStatus !== "ready" && (
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-600"></span>
-                  )}
-                </span>
-                <span className="text-sm font-medium">Step 2</span>
-              </div>
-              <h2 className="text-2xl font-bold text-white">Ask Questions</h2>
-              <p className="text-slate-400 max-w-2xl mx-auto">
-                {uploadStatus === "ready"
-                  ? "Your PDF is ready! Ask any question about the document content."
-                  : "Please wait while we process your PDF..."}
-              </p>
-            </div>
-
+          <section className="max-w-3xl mx-auto px-4 space-y-6">
             {conversations.length > 0 && (
               <AnswerDisplay
                 conversations={conversations}
@@ -199,15 +186,11 @@ export default function App() {
               isAsking={isAsking}
               handleKeyPress={handleKeyPress}
             />
-
           </section>
         )}
       </main>
 
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
-      </div>
+      <Footer />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { User, Bot, Volume2, VolumeX, Loader2, Copy, Check } from "lucide-react";
+import { User, Bot, Volume2, VolumeX, Loader2, Copy, Check, Quote } from "lucide-react";
 
 export interface Conversation {
   id: string;
@@ -22,7 +22,6 @@ export function AnswerDisplay({ conversations, apiBaseUrl, onAudioGenerated }: A
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
@@ -40,7 +39,6 @@ export function AnswerDisplay({ conversations, apiBaseUrl, onAudioGenerated }: A
   };
 
   const handleSpeakerClick = async (conv: Conversation) => {
-    // If this audio is currently playing, stop it
     if (playingAudioId === conv.id && audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -48,7 +46,6 @@ export function AnswerDisplay({ conversations, apiBaseUrl, onAudioGenerated }: A
       return;
     }
 
-    // Stop any currently playing audio
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -57,29 +54,20 @@ export function AnswerDisplay({ conversations, apiBaseUrl, onAudioGenerated }: A
 
     let audioFileName = conv.audioFile;
 
-    // If no audio file exists, generate one
     if (!audioFileName) {
       setLoadingAudioId(conv.id);
       try {
         const response = await fetch(`${apiBaseUrl}/ask`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            question: conv.question,
-            save_audio: true,
-          }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: conv.question, save_audio: true }),
         });
 
-        if (!response.ok) {
-          throw new Error("Failed to generate audio");
-        }
+        if (!response.ok) throw new Error("Failed to generate audio");
 
         const data = await response.json();
         audioFileName = data.audio_file;
 
-        // Notify parent to cache the audio file
         if (audioFileName && onAudioGenerated) {
           onAudioGenerated(conv.id, audioFileName);
         }
@@ -91,20 +79,14 @@ export function AnswerDisplay({ conversations, apiBaseUrl, onAudioGenerated }: A
       setLoadingAudioId(null);
     }
 
-    // Play the audio
     if (audioFileName) {
       const audio = new Audio(`${apiBaseUrl}/audio/${audioFileName}`);
       audioRef.current = audio;
-
-      audio.onended = () => {
-        setPlayingAudioId(null);
-      };
-
+      audio.onended = () => setPlayingAudioId(null);
       audio.onerror = () => {
         console.error("Error playing audio");
         setPlayingAudioId(null);
       };
-
       try {
         await audio.play();
         setPlayingAudioId(conv.id);
@@ -118,86 +100,106 @@ export function AnswerDisplay({ conversations, apiBaseUrl, onAudioGenerated }: A
   return (
     <div
       ref={containerRef}
-      className="flex flex-col space-y-0 max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent"
+      className="flex flex-col gap-6 max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent pr-1"
     >
+      {/* AI Greeting — show once at the top */}
+      {conversations.length > 0 && (
+        <div className="flex gap-3 animate-fadeIn">
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+            <Bot className="w-4 h-4 text-white" />
+          </div>
+          <div className="flex-1 bg-[#1a1a35]/80 border border-white/5 rounded-2xl rounded-tl-md p-4">
+            <p className="text-sm text-slate-300 leading-relaxed">
+              Hello! I've analyzed your document. How can I help you learn today?
+              You can ask me to summarize, quiz you, or explain complex concepts.
+            </p>
+          </div>
+        </div>
+      )}
+
       {conversations.map((conv) => (
-        <div key={conv.id} className="animate-fadeIn">
+        <div key={conv.id} className="space-y-4 animate-fadeIn">
           {/* User Message */}
-          <div className="py-5 px-4 hover:bg-slate-800/30 transition-colors">
-            <div className="max-w-3xl mx-auto flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
-                <User className="w-4 h-4 text-white" />
-              </div>
-              <div className="flex-1 pt-1">
-                <p className="text-sm font-medium text-slate-300 mb-1">You</p>
-                <p className="text-white leading-relaxed">{conv.question}</p>
-              </div>
+          <div className="flex gap-3 justify-end">
+            <div className="max-w-[80%] bg-gradient-to-r from-violet-600/90 to-indigo-600/90 rounded-2xl rounded-tr-md px-4 py-3 shadow-lg shadow-violet-500/10">
+              <p className="text-white text-sm leading-relaxed">{conv.question}</p>
+            </div>
+            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
+              <User className="w-4 h-4 text-white" />
             </div>
           </div>
 
           {/* AI Response */}
-          <div className="py-5 px-4 bg-slate-800/40 hover:bg-slate-800/50 transition-colors">
-            <div className="max-w-3xl mx-auto flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
-                <Bot className="w-4 h-4 text-white" />
-              </div>
-              <div className="flex-1 pt-1">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-sm font-medium text-slate-300">AI Assistant</p>
-                  <span className="text-xs text-slate-500">
-                    {conv.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-                <div className="text-slate-200 leading-relaxed whitespace-pre-wrap">
+          <div className="flex gap-3">
+            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+              <Bot className="w-4 h-4 text-white" />
+            </div>
+            <div className="flex-1 space-y-3">
+              {/* Answer bubble */}
+              <div className="bg-[#1a1a35]/80 border border-white/5 rounded-2xl rounded-tl-md p-4">
+                <div className="text-sm text-slate-200 leading-relaxed whitespace-pre-wrap">
                   {conv.answer}
                 </div>
+              </div>
 
-                {/* Action Buttons */}
-                <div className="flex items-center gap-1 mt-3 pt-3 border-t border-slate-700/50">
-                  {/* Copy Button */}
-                  <button
-                    onClick={() => handleCopyAnswer(conv)}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-md transition-all"
-                    title="Copy response"
-                  >
-                    {copiedId === conv.id ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-green-400" />
-                        <span className="text-green-400">Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Copy</span>
-                      </>
-                    )}
-                  </button>
-
-                  {/* Audio Button */}
-                  <button
-                    onClick={() => handleSpeakerClick(conv)}
-                    disabled={loadingAudioId === conv.id}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    title={playingAudioId === conv.id ? "Stop audio" : "Read aloud"}
-                  >
-                    {loadingAudioId === conv.id ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Generating...</span>
-                      </>
-                    ) : playingAudioId === conv.id ? (
-                      <>
-                        <VolumeX className="w-3.5 h-3.5 text-purple-400" />
-                        <span className="text-purple-400">Stop</span>
-                      </>
-                    ) : (
-                      <>
-                        <Volume2 className="w-3.5 h-3.5" />
-                        <span>Read aloud</span>
-                      </>
-                    )}
-                  </button>
+              {/* Citation block */}
+              <div className="bg-[#12122a]/60 border border-white/5 rounded-xl p-3 flex gap-3">
+                <Quote className="w-4 h-4 text-violet-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-medium text-violet-300 mb-1">Citation</p>
+                  <p className="text-xs text-slate-500 italic leading-relaxed">
+                    Source referenced from your uploaded document.
+                  </p>
                 </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => handleCopyAnswer(conv)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-500 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+                  title="Copy response"
+                >
+                  {copiedId === conv.id ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="text-emerald-400">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handleSpeakerClick(conv)}
+                  disabled={loadingAudioId === conv.id}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-500 hover:text-white hover:bg-white/5 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={playingAudioId === conv.id ? "Stop audio" : "Read aloud"}
+                >
+                  {loadingAudioId === conv.id ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Generating...</span>
+                    </>
+                  ) : playingAudioId === conv.id ? (
+                    <>
+                      <VolumeX className="w-3.5 h-3.5 text-violet-400" />
+                      <span className="text-violet-400">Stop</span>
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="w-3.5 h-3.5" />
+                      <span>Read aloud</span>
+                    </>
+                  )}
+                </button>
+
+                <span className="ml-auto text-[10px] text-slate-600">
+                  {conv.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
               </div>
             </div>
           </div>

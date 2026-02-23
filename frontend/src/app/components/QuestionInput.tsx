@@ -15,7 +15,6 @@ export default function QuestionInput({ question, setQuestion, uploadStatus, han
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFocused, setIsFocused] = useState(false);
 
-  // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -27,23 +26,20 @@ export default function QuestionInput({ question, setQuestion, uploadStatus, han
   const canSend = !isDisabled && question.trim().length > 0;
 
   return (
-    <div className="sticky bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent pt-6 pb-4">
-      <div className="max-w-3xl mx-auto px-4">
+    <div className="sticky bottom-0 left-0 right-0 bg-gradient-to-t from-[#0a0a1a] via-[#0a0a1a]/95 to-transparent pt-6 pb-4">
+      <div className="max-w-3xl mx-auto">
         <div
           className={`
-            relative bg-slate-800/90 backdrop-blur-xl rounded-xl 
-            border-2 transition-all duration-300
+            relative bg-[#12122a]/90 backdrop-blur-xl rounded-2xl
+            border transition-all duration-300
             ${isFocused
-              ? 'border-blue-500/70'
-              : 'border-slate-600 hover:border-slate-500'
+              ? 'border-violet-500/50 shadow-lg shadow-violet-500/10'
+              : 'border-white/10 hover:border-white/20'
             }
-            ${isDisabled ? 'opacity-60' : ''}
+            ${isDisabled ? 'opacity-50' : ''}
           `}
         >
-
-
           <div className="flex items-end gap-2 p-3">
-            {/* Textarea Input */}
             <div className="flex-1 relative">
               <textarea
                 ref={textareaRef}
@@ -59,50 +55,48 @@ export default function QuestionInput({ question, setQuestion, uploadStatus, han
                 onBlur={() => setIsFocused(false)}
                 placeholder={
                   uploadStatus === "ready"
-                    ? "Message AI Study Companion..."
+                    ? "Ask anything about your document..."
                     : "Upload a PDF to start asking questions..."
                 }
                 disabled={isDisabled}
                 rows={1}
                 className={`
-                  w-full bg-transparent text-white placeholder-slate-500 
+                  w-full bg-transparent text-white placeholder-slate-600
                   focus:outline-none resize-none py-2.5 px-3
-                  text-[15px] leading-relaxed
+                  text-sm leading-relaxed
                   disabled:cursor-not-allowed
                 `}
                 style={{ maxHeight: '200px' }}
               />
             </div>
 
-            {/* Send Button */}
             <button
               onClick={handleAsk}
               disabled={!canSend}
               className={`
-                flex-shrink-0 w-10 h-10 rounded-lg
+                flex-shrink-0 w-10 h-10 rounded-xl
                 flex items-center justify-center
                 transition-all duration-200
                 ${canSend
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white hover:scale-105'
-                  : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'
+                  ? 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg shadow-violet-500/20 hover:shadow-violet-500/30 hover:scale-105 active:scale-95'
+                  : 'bg-white/5 text-slate-600 cursor-not-allowed'
                 }
               `}
               title={isAsking ? "Generating response..." : "Send message"}
             >
               {isAsking ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <Send className="w-4 h-4" />
               )}
             </button>
           </div>
 
-          {/* Hint Text */}
           {uploadStatus === "ready" && (
             <div className="px-4 pb-3 flex items-center justify-center gap-2">
-              <Sparkles className="w-3 h-3 text-purple-400" />
-              <span className="text-xs text-slate-500">
-                Press Enter to send, Shift + Enter for new line
+              <Sparkles className="w-3 h-3 text-violet-400/60" />
+              <span className="text-[11px] text-slate-600">
+                Press Enter to send · Shift + Enter for new line
               </span>
             </div>
           )}
